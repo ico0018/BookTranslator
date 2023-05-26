@@ -3,22 +3,35 @@ import openai
 from tqdm import tqdm
 import time
 import argparse
+import sys
 
-# 创建解析步骤
+# List of supported languages
+supported_languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Dutch', 'Russian', 'Chinese', 'Japanese', 'Korean']
+
+# Create the parser
 parser = argparse.ArgumentParser(description='Translate text files.')
 parser.add_argument('--bilingual', action='store_true', help='Print both the original and translated text.')
+parser.add_argument('--language', default='English', help=f"The target language for translation. Supported languages are: {', '.join(supported_languages)}")
 
-# 解析参数
+# Parse the arguments
 args = parser.parse_args()
+
+# Check if the selected language is supported
+if args.language not in supported_languages:
+    print(f"Error: The language '{args.language}' is not supported.")
+    sys.exit(1)
 
 openai.api_key = os.getenv("OPENAI_KEY")
 
 input_directory = '../Original'
-output_directory = '../English'
+output_directory = f'../{args.language}'
+
+# If the output directory does not exist, create it
+os.makedirs(output_directory, exist_ok=True)
 
 end_of_sentence = ['。', '！', '？']
 
-N = 50  
+N = 50 
 
 for filename in os.listdir(input_directory):
     if filename.endswith(".txt"):
@@ -54,8 +67,8 @@ for filename in os.listdir(input_directory):
                         response = openai.ChatCompletion.create(
                             model="gpt-3.5-turbo",
                             messages=[
-                                {"role": "system", "content": "You are a translator."},
-                                {"role": "user", "content": f"Translate this into English:\n\n{part}"}
+                                {"role": "system", "content": f"You are a translator."},
+                                {"role": "user", "content": f"Translate this into {args.language}:\n\n{part}"}
                             ]
                         )
                         if args.bilingual:
