@@ -1,0 +1,24 @@
+# Ignore venv
+venv/
+
+# Ignore compiled Python files
+*.pyc
+
+# Ignore Python cache folders
+__pycache__/
+
+# Ignore local development configuration files
+config.ini
+
+# Ignore IDE specific files
+.vscode/
+*.pydevproject
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore resource
+Output/
+Original/
+English/
