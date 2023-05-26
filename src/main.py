@@ -3,11 +3,11 @@ import openai
 from tqdm import tqdm
 import time
 
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_KEY")
 
 # 定义输入输出目录
-input_directory = 'Original'
-output_directory = 'English'
+input_directory = '../Original'
+output_directory = '../English'
 
 # 定义句子结束的标志
 end_of_sentence = ['。', '！', '？']
