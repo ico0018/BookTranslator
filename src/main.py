@@ -4,6 +4,17 @@ from tqdm import tqdm
 import time
 import argparse
 import sys
+import json
+
+# Check if there is a saved state from a previous run
+try:
+    with open('state.json', 'r') as f:
+        state = json.load(f)
+    resume = input('A previous session was interrupted. Do you want to resume from where you left off? (yes/no) ')
+    if resume.lower() != 'yes':
+        state = None
+except FileNotFoundError:
+    state = None
 
 # List of supported languages
 supported_languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Dutch', 'Russian', 'Chinese', 'Japanese', 'Korean']
@@ -33,11 +44,13 @@ end_of_sentence = ['。', '！', '？']
 
 N = 50 
 
+start_file = state['filename'] if state else None
+start_part = state['part'] if state else None
+
 for filename in os.listdir(input_directory):
     if filename.endswith(".txt"):
         with open(os.path.join(input_directory, filename), 'r', encoding='utf-8') as f:
             text = f.read()
-
         parts = []
         while text:
             if len(text) > 1024:
@@ -60,8 +73,10 @@ for filename in os.listdir(input_directory):
                 parts.append(text)
                 text = ''
 
-        with open(os.path.join(output_directory, filename), 'w', encoding='utf-8') as f:
-            for part in tqdm(parts, desc=f"Translating {filename}", unit="part"):
+        with open(os.path.join(output_directory, filename), 'w', encoding='utf-8') as f_out:
+            for i, part in enumerate(tqdm(parts, desc=f"Translating {filename}", unit="part")):
+                if start_part and i < start_part:
+                    continue
                 while True:
                     try:
                         response = openai.ChatCompletion.create(
@@ -72,13 +87,23 @@ for filename in os.listdir(input_directory):
                             ]
                         )
                         if args.bilingual:
-                            f.write(f"{part}\n")
-                        f.write(f"{response['choices'][0]['message']['content']}\n")
+                            f_out.write(f"{part}\n")
+                        f_out.write(f"{response['choices'][0]['message']['content']}\n")
                         time.sleep(0.1)
                         break
+                    except KeyboardInterrupt:
+                        # Save the current state and exit
+                        with open('state.json', 'w') as f_state:
+                            json.dump({'filename': filename, 'part': i}, f_state)
+                        print('Interrupted. The current state has been saved.')
+                        sys.exit(1)
                     except openai.error.RateLimitError:
                         print("Rate limit exceeded, sleeping for a while...")
                         time.sleep(60)
                     except openai.error.OpenAIError as e:
                         print(f"An error occurred: {e}")
                         break
+try:
+    os.remove('state.json')
+except FileNotFoundError:
+    pass
