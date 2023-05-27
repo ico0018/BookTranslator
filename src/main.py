@@ -111,7 +111,7 @@ for filename in os.listdir(input_directory):
                         print(f"An error occurred: {e}")
                         break
             try:
-                s3.upload_file(os.path.join(output_directory, filename), bucket_name, filename)
+                s3.upload_file(os.path.join(output_directory, filename), bucket_name, 'English/' + filename)
             except Exception as e:
                 print(f"An error occurred while uploading the file to S3: {e}")
 try:
