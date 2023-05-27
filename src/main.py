@@ -5,6 +5,13 @@ import time
 import argparse
 import sys
 import json
+import boto3
+
+# Create an S3 client
+s3 = boto3.client('s3')
+
+# Specify the bucket
+bucket_name = 'ico0018data'
 
 # Check if there is a saved state from a previous run
 try:
@@ -103,6 +110,10 @@ for filename in os.listdir(input_directory):
                     except openai.error.OpenAIError as e:
                         print(f"An error occurred: {e}")
                         break
+            try:
+                s3.upload_file(os.path.join(output_directory, filename), bucket_name, filename)
+            except Exception as e:
+                print(f"An error occurred while uploading the file to S3: {e}")
 try:
     os.remove('state.json')
 except FileNotFoundError:
